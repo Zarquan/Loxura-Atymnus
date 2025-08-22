@@ -1,0 +1,60 @@
+#
+# <meta:header>
+#   <meta:licence>
+#     Copyright (c) 2025, Manchester (http://www.manchester.ac.uk/)
+#
+#     This information is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This information is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   </meta:licence>
+# </meta:header>
+#
+#zrq-notes-indent
+#
+# AIMetrics: []
+#
+
+    Target:
+
+        Building on our initial experiment with Claude AI.
+        https://claude.ai/chat/6ada1d8e-c18b-4749-90d8-3e75d5d22dee
+
+    Result:
+
+        Work in progress ...
+
+# -----------------------------------------------------
+
+    Things we have learned after our first experiment.
+
+    1) Python broker client
+
+        Rather than asking Claude to connect to http services,
+        we should give it a Python client for the broker.
+
+        We should be able to generate the broker client from the OpenAPI specification.
+
+    2) Simplify the requested start time to a single interval.
+
+    3) Experiment with generating different things from the OpenAPI specification.
+        a) Just the Pydantic beans
+        b) Just the Java beans
+        c) Just the endpoints
+        d) Just the client
+
+    4) Add test properties to the Java prototype.
+       Including a delay in responding.
+
+
+
+
+
