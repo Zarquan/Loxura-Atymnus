@@ -1,0 +1,174 @@
+#
+# <meta:header>
+#   <meta:licence>
+#     Copyright (c) 2025, Manchester (http://www.manchester.ac.uk/)
+#
+#     This information is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This information is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   </meta:licence>
+# </meta:header>
+#
+#zrq-notes-indent
+#
+# AIMetrics: []
+#
+
+    Target:
+
+        Thinking about how to check AI generated code.
+
+        GitHub CEO: Future devs will not code, they will manage AI • The Register
+        https://www.theregister.com/2025/08/07/github_ceo_ai_coding/
+
+    Result:
+
+        Work in progress ...
+
+# -----------------------------------------------------
+
+    Quote from The Sequence newsletter
+    https://thesequence.substack.com/p/the-sequence-radar-from-gpt-5-to
+    Sun 12:02
+
+    The Sequence Radar #700: From GPT-5 to Claude Opus, This Crazy Week in Model Releases
+
+    In a normal week, the release of GPT-5 would have been enough for this editorial but
+    not in this week. Four major model releases—GPT-5, gpt-oss, Genie 3, and Claude Opus—signal
+    where frontier systems are headed and how the ecosystem around them is consolidating.
+
+    The headline isn’t just “bigger models”; it’s increasingly systems-first: planning,
+    tool-use, memory, and grounding are being treated as core capabilities rather than bolt-ons.
+    Together, these launches sketch a stack: generalist reasoners at the top, open and efficient
+    models in the middle, and simulation/generative environments at the bottom that make agents
+    testable—and useful.
+
+    GPT-5 is framed less as “more params, more benchmarks” and more as a deliberative engine
+    that can decompose tasks, call tools, and keep long-horizon objectives on track.
+    The interesting bits are in orchestration: better control over reasoning depth vs. latency,
+    more reliable function/tool calling, and guardrails that make high-stakes workflows auditable.
+    In practice, that means moving from “answer my question” to “plan, execute across APIs and data
+    sources, and justify the steps you took”—the difference between a chatbot and an operator.
+
+    On the open side, gpt-oss matters because it raises the floor. A strong, permissively licensed
+    model with clean training and fine-tuning hooks gives teams a credible default for private,
+    cost-sensitive workloads. You won’t route everything to a frontier model—nor should you.
+    Expect usage patterns where gpt-oss handles the 80% of tasks that are routine (summaries,
+    extraction, structured generation), while premium tokens are reserved for reasoning spikes,
+    tricky edge cases, and safety-critical calls. The strategic value here is reproducibility
+    and unit economics, not chasing the very last point on leaderboards.
+
+    DeepMind’s Genie 3 pushes on a different frontier: world models that you can act in.
+    It’s not just pretty video; it’s controllable, action-conditioned generation that turns prompts
+    into playable scenes and interactive micro-worlds. That unlocks two things: (1) richer pretraining
+    and evaluation beds for agents (you can probe planning, transfer, and failure modes safely), and
+    (2) new creative tools where users sketch mechanics and constraints and the model instantiates
+    a living environment. If the past few years were about text and images, Genie 3 is about
+    dynamics—state that evolves under your actions.
+
+    Claude Opus remains the banner for careful, reliable reasoning. The emphasis is still on faithful
+    long-form analysis, disciplined tool use, and safety scaffolding that keeps outputs steerable
+    without turning sterile. In enterprise settings—policy generation, sensitive RAG, code reviews
+    with provenance—Opus tends to win not by flash but by consistency under pressure.
+    Think less “one-shot genius” and more “won’t hallucinate a policy clause at 2 a.m.”
+    That reliability compounds when you wire it into agents, where a single ungrounded step can
+    derail an entire run.
+
+    Put together, the pattern is clear. A modern AI stack will route between (a) a frontier planner
+    (GPT-5/Opus) for decomposition and oversight, (b) efficient open models (gpt-oss) for bulk
+    transformation, and (c) grounded simulators/environments (Genie 3) for training, testing,
+    and human-in-the-loop design. Around that, you need infrastructure that was optional before:
+    evaluation harnesses that catch regressions, telemetry for tool calls and traces, policy layers
+    that are programmable, and memory that’s both cheap and compliant.
+
+
+
+# -----------------------------------------------------
+
+    Results from using ChatGPT to generate a regex for ISO8601 Interval.
+    https://chatgpt.com/share/68975beb-1298-8008-b439-a0cd06b636cf
+
+    The initial prompt was "can you create a regex expression to validate an ISO8601 Interval"
+
+    ChatGPT understood the brief, it understood how to create regex expressions, and it understood what a ISO8601 Interval was.
+
+    ChatGPT declared in a confident voice that this regex was the solution to the breif, when it wasn't.
+
+    I used Regex-101 (https://regex101.com/) to validate the expressions ChatGPT created.
+
+    Problems ranged from missing edge cases, to invalid regular expressions (unmatched groups).
+
+    ChatGPT helpfully supplied examples of patterns that the regular expression would and would not match.
+    Unfortunatley in a couple of cases the regular expression didn't even match the examples it gave.
+
+    I noticed that the work it claimed to be doing and the steps it claimed to be taking became more
+    complex as the chat progressed.
+    It felt like the first answers were just done using simple response tools but as I teported more
+    errors it took the problem more seriously and started using more complex tools to solve it,
+    but the regular expressions it generated still had bugs and errors in them.
+
+    All the way through, the happy chatty voice was adamant that _this_ one was the solution.
+    Then when I reported an error, it sat back and 'thought more' about the problem.
+
+    At one stage ChatGPT claimed it was testing the regular expression in Python, but it didn't
+    show the Python code it had used. That would have been an interesting step to see.
+
+    It confidently claimed this regular expression was the one, it had tested in in Python and
+    it would work .. only to fail on one of the examples it gave.
+
+    Towards the end I was losing patience, and was thinking of trying ClaudeAI to see if it could give
+    a better solution.
+
+    I finally got a working regular expression out of it, and even found a bug in my own Java
+    code that was generating the ISO8601 Intervals in the first place, but it was a long sequence of
+    trial and error.
+
+    Creating a regular expression for a well understood ISO standard is the kind of thing I would
+    expect a code generating model to be good at. It is the kind of thing that is hard for humans
+    to figure out and should be easy for a machine.
+
+    This should be a warning.
+    I've been using ClaudeAI to generate the code for the aggregator webapp, trusting it to generate
+    the code for handling the concurrent requests and responses from the downstream services
+    and aggregating them into a single list.
+
+    I don't know how to handling the concurrent responses in Python. I'm assuming it would involve
+    something similar to the wait/notify constructs in Java, but I don't know.
+    Which is why I'm using ClaudeAI to generate the code.
+
+    Learning from this work, I still needed to verify the regular expressions that ChatGPT generated.
+    Setting up a test to verify a regular expression is fairly easy to do.
+    We can create known good inputs and known bad inputs manually, apply thew and check the results.
+
+    How do we verify that the concurrent response handling works correctly ?
+    Setting up a timing test to check for race conditions is hard.
+
+    I understand the problem.
+    I know that it is a common problem and I think there should be a fairly common way of solving it.
+    I know how to solve it in Java, but I don't know how to solve it in Python.
+
+    ClaudeAI will happily generate code to solve it.
+    That seems to work as intended.
+    But how do I check it ?
+
+    The whole reason for using an AI tool for this is because I don't want to spend days testing and
+    debugging my non-expert guesses at implementing it.
+
+    I don't want to swap that for spending days testing and debugging the AI's non-expert guesses.
+
+    what if ... I used two different AI tools, and asked one to test and verify the results from the other ?
+
+    Asking it to create tests to provoke a race condition ?
+
+
+
+

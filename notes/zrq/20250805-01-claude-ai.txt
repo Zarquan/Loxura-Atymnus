@@ -1,0 +1,434 @@
+#
+# <meta:header>
+#   <meta:licence>
+#     Copyright (c) 2025, Manchester (http://www.manchester.ac.uk/)
+#
+#     This information is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This information is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   </meta:licence>
+# </meta:header>
+#
+#zrq-notes-indent
+#
+# AIMetrics: []
+#
+
+    Target:
+
+        Using Claude AI to create the aggregation service.
+        https://claude.ai/chat/6ada1d8e-c18b-4749-90d8-3e75d5d22dee
+
+        Loxura Atymnus
+        https://en.wikipedia.org/wiki/Loxura_atymnus
+
+    Result:
+
+        Work in progress ...
+
+# -----------------------------------------------------
+
+    Looking at how the aggregation service handles the broker responses.
+
+    In the current model the start time(s) are an array of intervals.
+    This is to allow the user to ask for a start time between 9-5 on Monday, Tuesday and Wednesday this week.
+    ... but this complicates the job the aggregator has to do to collect the results
+
+    If we simply say the aggregator waits for <n> offers, then it could complete
+    with <n> offers on Monday, leaving Tuesday and Wednesday empty.
+
+    So would we want the aggregator to wait for at least <n> total offers,
+    with at least <m> offers in each interval ?
+
+    That means it needs to unpack the responses and keep a count of the offers in each interval.
+    Which is complicated.
+
+    Simpler to leave that up to the UI.
+
+    If we make start time a single interval, then it is up to the client/UI to make three separate
+    requests for 9-5 on Monday, 9-5 on Tuesday and 9-5 on Wednesday.
+
+    The aggregator is simple - it just counts the total positive responses and the total offers.
+
+    The client/UI is simpler because it doesn't need to unpack a single complex response
+    with multiple start intervals.
+
+    TL;DR; make start time a single interval
+
+# -----------------------------------------------------
+# Run the aggregator in a container.
+#[user@desktop]
+
+    cat > "${HOME:?}/loxura.env" << 'EOF'
+source "${HOME:?}/projects.env"
+LOXURA_REPO='git@github.com:Zarquan/Loxura-integration.git'
+LOXURA_HOME="${PROJECTS_ROOT}/IVOA/ivoa/Loxura-integration"
+LOXURA_CODE="${LOXURA_HOME:?}/github-zrq"
+EOF
+
+    source "${HOME:?}/loxura.env"
+
+    podman run \
+        --rm \
+        --tty \
+        --interactive \
+        --publish 8000:8000 \
+        --name python-webapp \
+        --volume "${LOXURA_CODE}:/loxura:rw,z" \
+        fedora:40 \
+        bash
+
+        dnf install -y \
+            python3 \
+            python3-pip
+
+        pip3 install \
+            fastapi \
+            uvicorn \
+            aiohttp
+
+        pushd /loxura/aggregator
+
+            python main.py
+
+--START--
+....
+....
+--END--
+
+# -----------------------------------------------------
+# Check if we can connect ...
+#[user@desktop]
+
+    curl --request GET \
+        "http://localhost:8000/api/health"
+
+--START--
+curl: (56) Recv failure: Connection reset by peer
+--END--
+
+    #
+    # Lost a couple of hours learning about obscure bugs in Podman networkstack.
+    # Turns out it is because curl defaults to IPv6.
+    #
+
+    curl "http://localhost:8000/api/health"
+
+--START--
+curl: (56) Recv failure: Connection reset by peer
+--END--
+
+
+    host localhost
+
+--START--
+localhost has address 127.0.0.1
+localhost has IPv6 address ::1
+--END--
+
+
+    curl "http://127.0.0.1:8000/api/health"
+
+--START--
+{"status":"healthy","timestamp":"2025-08-05T16:46:20.765720","services_count":4,"uptime_seconds":1078.16088,"active_jobs":0}
+--END--
+
+
+    curl -4 "http://localhost:8000/api/health"
+
+--START--
+{"status":"healthy","timestamp":"2025-08-05T16:46:49.415932","services_count":4,"uptime_seconds":1106.811088,"active_jobs":0}
+--END--
+
+
+# -----------------------------------------------------
+# Setup a MockServer to act as a borker.
+# Java server handles both IPv4 and IPv5.
+#[user@desktop]
+
+    podman run \
+        --rm \
+        --tty \
+        --interactive \
+        --name mockserver \
+        --publish 1080:1080 \
+        "docker.io/mockserver/mockserver"
+
+
+    curl \
+        --request PUT \
+        "http://localhost:1080/mockserver/reset"
+
+--START--
+....
+....
+--END--
+
+
+    firefox \
+        --new-window \
+        "http://localhost:1080/mockserver/dashboard"
+
+--START--
+....
+....
+--END--
+
+
+    curl \
+        --request PUT \
+        --data '{
+            "httpRequest" : {
+                "method" : "GET",
+                "path" : "/view/cart",
+              },
+            "httpResponse" : {
+                "body" : "some_response_body"
+              }
+            }' \
+        "http://localhost:1080/mockserver/expectation"
+
+    curl \
+        --request GET \
+        "http://localhost:1080/view/cart"
+
+--START--
+some_response_body
+--END--
+
+
+# -----------------------------------------------------
+# How to see pod 1 from pod 2
+#[user@desktop]
+
+    podman pod create \
+        --name testpod \
+        --publish 1080:1080 \
+        --publish 8000:8000
+
+--START--
+....
+....
+--END--
+
+
+    podman run \
+        --rm \
+        --tty \
+        --pod testpod \
+        --interactive \
+        --name mockserver \
+        "docker.io/mockserver/mockserver"
+
+--START--
+....
+....
+--END--
+
+
+
+
+    source "${HOME:?}/loxura.env"
+
+    podman run \
+        --rm \
+        --tty \
+        --pod testpod \
+        --interactive \
+        --name python-webapp \
+        --volume "${LOXURA_CODE}:/loxura:rw,z" \
+        fedora:42 \
+        bash
+
+        dnf install -y \
+            python3 \
+            python3-pip
+
+        pip3 install \
+            fastapi \
+            uvicorn \
+            aiohttp
+
+        pushd /loxura/aggregator
+
+            python main.py
+
+--START--
+....
+....
+--END--
+
+
+
+
+
+    curl \
+        --request PUT \
+        "http://localhost:1080/mockserver/reset"
+
+    curl \
+        --request PUT \
+        --data '{
+            "httpRequest" : {
+              "method" : "POST",
+              "path" : "/offersets"
+              },
+            "httpResponse" : {
+              "statusCode": 303,
+              "reasonPhrase": "I am a teapot",
+              "headers": {
+                "Location": ["/offersets/100"]
+                }
+              }
+            }' \
+        "http://localhost:1080/mockserver/expectation"
+
+    curl \
+        --request PUT \
+        --data '{
+            "httpRequest" : {
+                "method" : "GET",
+                "path" : "/offersets/100",
+              },
+            "httpResponse" : {
+                "body" : "{
+                  \"uuid\": \"cd254716-db7b-4d6b-81ae-8955894edd67\",
+                  \"type\": \"https://www.purl.org/ivoa.net/EB/schema/types/offerset/offerset-response-1.0\",
+                  \"created\": \"2025-06-21T12:14:33.103509263Z\",
+                  \"href\": \"http://127.0.0.1:8082/offersets/cd254716-db7b-4d6b-81ae-8955894edd67\",
+                  \"result\": \"YES\",
+                  \"offers\": [
+                    {
+                      \"uuid\": \"c32ca44e-adfa-4a75-ba9f-89aca49cc797\",
+                      \"type\": \"https://www.purl.org/ivoa.net/EB/schema/types/session/execution-session-response-1.0\",
+                      \"created\": \"2025-06-21T12:14:33.450722658Z\",
+                      \"href\": \"http://127.0.0.1:8082/sessions/c32ca44e-adfa-4a75-ba9f-89aca49cc797\",
+                      \"schedule\": {
+                        \"offered\": {
+                          \"preparing\": {
+                            \"start\": \"2025-06-21T12:15:00Z\"
+                          },
+                          \"available\": {
+                            \"duration\": \"PT4H\",
+                            \"start\": \"2025-06-21T12:15:00Z\"
+                          }
+                        }
+                      },
+                      \"executable\": {
+                        \"type\": \"https://www.purl.org/ivoa.net/EB/schema/types/executable/jupyter-notebook-1.0\",
+                        \"uuid\": \"c75c0bb6-ecd8-4487-859e-59337fb15759\",
+                        \"created\": \"2025-06-21T12:14:33.453449384Z\",
+                        \"location\": \"https://www.example.org/example-003.ipynb\"
+                      },
+                      \"computer\": {
+                        \"type\": \"https://www.purl.org/ivoa.net/EB/schema/types/computer/simple-compute-resource-1.0\",
+                        \"uuid\": \"69ec6edb-3efe-4f16-9b94-3c8883558493\",
+                        \"cores\": {
+                          \"min\": 2,
+                          \"max\": 2
+                        },
+                        \"memory\": {
+                          \"min\": 2,
+                          \"max\": 2
+                        }
+                      },
+                      \"phase\": \"OFFERED\",
+                      \"expires\": \"2025-06-21T17:14:33.103525595Z\"
+                    }
+                  ]
+                }"
+              }
+            }' \
+        "http://localhost:1080/mockserver/expectation"
+
+    curl \
+        --verbose \
+        --request POST \
+        --data '{
+            "executable": {
+              "type": "https://www.purl.org/ivoa.net/EB/schema/types/executable/jupyter-notebook-1.0",
+              "location": "https://www.example.org/example-003.ipynb"
+              }
+            }' \
+        "http://localhost:1080/offersets"
+
+--START--
+....
+....
+< HTTP/1.1 303 I am a teapot
+< Location: /offersets/100
+< connection: keep-alive
+< content-length: 0
+--END--
+
+
+    curl \
+        --verbose \
+        --request GET \
+        "http://localhost:1080/offersets/100"
+
+--START--
+{
+  "uuid": "cd254716-db7b-4d6b-81ae-8955894edd67",
+  "type": "https://www.purl.org/ivoa.net/EB/schema/types/offerset/offerset-response-1.0",
+  "created": "2025-06-21T12:14:33.103509263Z",
+  "href": "http://127.0.0.1:8082/offersets/cd254716-db7b-4d6b-81ae-8955894edd67",
+  "result": "YES",
+  "offers": [
+    {
+      "uuid": "c32ca44e-adfa-4a75-ba9f-89aca49cc797",
+      "type": "https://www.purl.org/ivoa.net/EB/schema/types/session/execution-session-response-1.0",
+      "created": "2025-06-21T12:14:33.450722658Z",
+      "href": "http://127.0.0.1:8082/sessions/c32ca44e-adfa-4a75-ba9f-89aca49cc797",
+      "schedule": {
+        "offered": {
+          "preparing": {
+            "start": "2025-06-21T12:15:00Z"
+          },
+          "available": {
+            "duration": "PT4H",
+            "start": "2025-06-21T12:15:00Z"
+          }
+        }
+      },
+      "executable": {
+        "type": "https://www.purl.org/ivoa.net/EB/schema/types/executable/jupyter-notebook-1.0",
+        "uuid": "c75c0bb6-ecd8-4487-859e-59337fb15759",
+        "created": "2025-06-21T12:14:33.453449384Z",
+        "location": "https://www.example.org/example-003.ipynb"
+      },
+      "computer": {
+        "type": "https://www.purl.org/ivoa.net/EB/schema/types/computer/simple-compute-resource-1.0",
+        "uuid": "69ec6edb-3efe-4f16-9b94-3c8883558493",
+        "cores": {
+          "min": 2,
+          "max": 2
+        },
+        "memory": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "phase": "OFFERED",
+      "expires": "2025-06-21T17:14:33.103525595Z"
+    }
+  ]
+}
+--END--
+
+
+
+
+    curl \
+        --request POST \
+
+
